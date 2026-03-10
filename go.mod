@@ -1,4 +1,4 @@
-module github.com/sonirico/go-hyperliquid
+module github.com/ivaaaan/go-hyperliquid
 
 go 1.25.3
 
