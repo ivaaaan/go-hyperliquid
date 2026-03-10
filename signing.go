@@ -26,41 +26,6 @@ func addressToBytes(address string) []byte {
 	return bytes
 }
 
-// convertStr16ToStr8 converts msgpack str16 (0xda + 2 byte length) to str8 (0xd9 + 1 byte length)
-// for strings <256 bytes to match Python msgpack behavior
-func convertStr16ToStr8(data []byte) []byte {
-	result := make([]byte, 0, len(data))
-	i := 0
-
-	for i < len(data) {
-		b := data[i]
-
-		// Check if it's str16 (0xda)
-		if b == 0xda && i+2 < len(data) {
-			// Read 2-byte big-endian length
-			length := (int(data[i+1]) << 8) | int(data[i+2])
-
-			// If length fits in 1 byte, convert to str8 (0xd9)
-			if length < 256 {
-				result = append(result, 0xd9)
-				result = append(result, byte(length))
-				i += 3
-				// Copy the string data
-				if i+length <= len(data) {
-					result = append(result, data[i:i+length]...)
-					i += length
-				}
-				continue
-			}
-		}
-
-		result = append(result, b)
-		i++
-	}
-
-	return result
-}
-
 func actionHash(action any, vaultAddress string, nonce int64, expiresAfter *int64) []byte {
 	var buf bytes.Buffer
 	enc := msgpack.NewEncoder(&buf)
@@ -73,9 +38,6 @@ func actionHash(action any, vaultAddress string, nonce int64, expiresAfter *int6
 		panic(fmt.Sprintf("failed to marshal action: %v", err))
 	}
 	data := buf.Bytes()
-
-	// Convert fixstr to str8 for Python compatibility
-	data = convertStr16ToStr8(data)
 
 	// fmt.Printf("🔍 DEBUG actionHash msgpack: %s\n", hex.EncodeToString(data))
 
